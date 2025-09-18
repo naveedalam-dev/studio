@@ -91,7 +91,7 @@ export function SendCoinsForm() {
         if (totalCoins > balance) {
           toast({
             title: 'Error',
-            description: 'Insufficient demo credits.',
+            description: 'Insufficient credits.',
             variant: 'destructive',
           });
           return;
@@ -100,7 +100,7 @@ export function SendCoinsForm() {
         setBalance(prev => prev - totalCoins);
         toast({
           title: '✅ Success!',
-          description: `You sent ${totalCoins.toLocaleString()} demo coins to ${data.username}`,
+          description: `You sent ${totalCoins.toLocaleString()} coins to ${data.username}`,
         });
 
         // Reset form
@@ -120,12 +120,12 @@ export function SendCoinsForm() {
         <div className="flex justify-between items-center p-6 pb-0">
           <CoinSenderLogo className="text-foreground h-7 w-7" />
           <div className="text-primary font-semibold">
-            Balance: {balance.toLocaleString()} Demo Coins
+            Balance: {balance.toLocaleString()} Coins
           </div>
         </div>
         <CardHeader>
-          <CardTitle className="font-headline text-3xl">Get Coins (Demo)</CardTitle>
-          <CardDescription>Send demo coins to your favorite creator</CardDescription>
+          <CardTitle className="font-headline text-3xl">Get Coins</CardTitle>
+          <CardDescription>Send coins to your favorite creator</CardDescription>
         </CardHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -209,7 +209,7 @@ export function SendCoinsForm() {
                     <span className="font-bold">{totalCoins.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between items-center font-bold text-xl">
-                    <span>Demo Price</span>
+                    <span>Price</span>
                     <span>{formatCurrency(totalPrice)}</span>
                   </div>
                 </div>
