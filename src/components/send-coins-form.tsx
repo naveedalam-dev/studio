@@ -177,7 +177,7 @@ export function SendCoinsForm() {
                         )}
                       >
                         {isSelected && <CheckCircle2 className="absolute top-2 right-2 h-5 w-5 text-primary" />}
-                        <CircleDollarSign className="mx-auto h-8 w-8 text-amber-400 mb-2" />
+                        <CoinSenderLogo className="mx-auto h-8 w-8 mb-2" />
                         <p className="font-bold text-lg">{pkg.isCustom ? 'Custom' : pkg.coins?.toLocaleString()}</p>
                         {pkg.isCustom ? (
                           <FormField
