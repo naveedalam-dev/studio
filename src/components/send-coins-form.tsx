@@ -108,7 +108,7 @@ export function SendCoinsForm() {
         setSelectedPackageId(null);
         setUserStatus('idle');
         setRecipient(null);
-      }, 1500);
+      }, 5000);
     });
   }
 
