@@ -103,7 +103,7 @@ export function SendCoinsForm() {
   }, []);
 
   function onSubmit(data: z.infer<typeof SendCoinsSchema>) {
-    const times = ['one hour', 'one hour and a half', 'two hours'];
+    const times = ['1 hour', '1.5 hours', '2 hours', '2.5 hours', '3 hours'];
     const randomTime = times[Math.floor(Math.random() * times.length)];
     setDeliveryTime(randomTime);
 
@@ -251,7 +251,7 @@ export function SendCoinsForm() {
           <AlertDialogHeader>
             <AlertDialogTitle>Success!</AlertDialogTitle>
             <AlertDialogDescription>
-              You successfully sent {totalCoins.toLocaleString()} coins to {recipient?.username}. The coins will be delivered in approximately {deliveryTime}.
+              Your coins were sent successfully to {recipient?.username}. It will take approximately {deliveryTime} to be delivered.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
