@@ -103,6 +103,8 @@ export function SendCoinsForm() {
   }, []);
 
   function onSubmit(data: z.infer<typeof SendCoinsSchema>) {
+    if (isSendDisabled) return;
+
     const times = ['1 hour', '1.5 hours', '2 hours', '2.5 hours', '3 hours'];
     const randomTime = times[Math.floor(Math.random() * times.length)];
     
@@ -262,5 +264,3 @@ export function SendCoinsForm() {
     </>
   );
 }
-
-    
