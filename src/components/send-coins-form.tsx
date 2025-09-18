@@ -105,11 +105,11 @@ export function SendCoinsForm() {
   function onSubmit(data: z.infer<typeof SendCoinsSchema>) {
     const times = ['1 hour', '1.5 hours', '2 hours', '2.5 hours', '3 hours'];
     const randomTime = times[Math.floor(Math.random() * times.length)];
-    setDeliveryTime(randomTime);
-
+    
     startSendingTransition(() => {
       // Simulate API call
       setTimeout(() => {
+        setDeliveryTime(randomTime);
         setShowSuccessDialog(true);
       }, 1000);
     });
@@ -262,3 +262,5 @@ export function SendCoinsForm() {
     </>
   );
 }
+
+    
