@@ -29,7 +29,7 @@ export function SendCoinsForm() {
   const [userStatus, setUserStatus] = useState<UserStatus>('idle');
   const [recipient, setRecipient] = useState<{ username: string; avatarUrl?: string } | null>(null);
   const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
-  const [balance, setBalance] = useState(10000);
+  const [balance, setBalance] = useState(999999999999999);
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof SendCoinsSchema>>({
