@@ -5,19 +5,28 @@ export function CoinSenderLogo(props: SVGProps<SVGSVGElement>) {
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"
-      fill="currentColor"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
       {...props}
     >
+      <circle cx="12" cy="12" r="10" fill="hsl(var(--primary))" stroke="none" />
       <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2ZM12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4Z"
-        fill="#FBBF24"
+        d="M16 8A4 4 0 1 1 12.1 4"
+        stroke="hsl(var(--primary-foreground))"
+        strokeWidth="2.5"
       />
       <path
-        d="M12 7.5C10.8 7.5 9.75 8.1 9.375 9H9.3C9.18 9 9 9.18 9 9.3V14.25C9 15.21 8.2125 16 7.25 16C6.2875 16 5.5 15.21 5.5 14.25C5.5 13.29 6.2875 12.5 7.25 12.5V10.5C5.175 10.5 3.5 12.18 3.5 14.25C3.5 16.32 5.175 18 7.25 18C9.325 18 11 16.32 11 14.25V11H14.125C14.1923 10.2077 14.5453 9.47543 15.1115 8.88852C15.6777 8.30161 16.4299 8 17.25 8C18.45 8 19.5 8.9 19.5 10.125C19.5 11.355 18.45 12.25 17.25 12.25C16.05 12.25 15 11.355 15 10.125V9.3C15 9.18 14.82 9 14.7 9H11.375C11.75 8.1 12.8 7.5 14 7.5H12Z"
-        fill="#FBBF24"
-        transform="translate(1, 0)"
+        d="M8 16A4 4 0 1 1 11.9 20"
+        stroke="hsl(var(--primary-foreground))"
+        strokeWidth="2.5"
+      />
+       <path
+        d="M12 4V20"
+        stroke="hsl(var(--primary-foreground))"
+        strokeWidth="2.5"
       />
     </svg>
   );

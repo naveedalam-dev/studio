@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { CUSTOM_COIN_PRICE, PACKAGES, type Package } from '@/lib/data';
-import { Loader2, CircleDollarSign, CheckCircle2 } from 'lucide-react';
+import { Loader2, CheckCircle2 } from 'lucide-react';
 import { CoinSenderLogo } from './icons';
 
 const SendCoinsSchema = z.object({
@@ -112,7 +112,7 @@ export function SendCoinsForm() {
     }, 5000);
   }
 
-  const isSendDisabled = isSending || userStatus !== 'valid' || totalCoins <= 0;
+  const isSendDisabled = isSending || userStatus !== 'valid' || !selectedPackageId || totalCoins <= 0;
 
   return (
     <>
