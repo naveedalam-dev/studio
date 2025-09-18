@@ -3,8 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { useState, useEffect, useMemo, useTransition, useCallback } from 'react';
-import Image from 'next/image';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,7 +24,7 @@ const SendCoinsSchema = z.object({
 type UserStatus = 'idle' | 'valid' | 'invalid';
 
 export function SendCoinsForm() {
-  const [isSending, startSendingTransition] = useTransition();
+  const [isSending, setIsSending] = useState(false);
   const [userStatus, setUserStatus] = useState<UserStatus>('idle');
   const [recipient, setRecipient] = useState<{ username: string; avatarUrl?: string } | null>(null);
   const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
@@ -86,30 +85,31 @@ export function SendCoinsForm() {
   function onSubmit(data: z.infer<typeof SendCoinsSchema>) {
     if (isSendDisabled) return;
 
-    startSendingTransition(() => {
-      setTimeout(() => {
-        if (totalCoins > balance) {
-          toast({
-            title: 'Error',
-            description: 'Insufficient credits.',
-            variant: 'destructive',
-          });
-          return;
-        }
-
-        setBalance(prev => prev - totalCoins);
+    setIsSending(true);
+    setTimeout(() => {
+      if (totalCoins > balance) {
         toast({
-          title: '✅ Success!',
-          description: `You sent ${totalCoins.toLocaleString()} coins to ${data.username}`,
+          title: 'Error',
+          description: 'Insufficient credits.',
+          variant: 'destructive',
         });
+        setIsSending(false);
+        return;
+      }
 
-        // Reset form
-        form.reset();
-        setSelectedPackageId(null);
-        setUserStatus('idle');
-        setRecipient(null);
-      }, 5000);
-    });
+      setBalance(prev => prev - totalCoins);
+      toast({
+        title: '✅ Success!',
+        description: `You sent ${totalCoins.toLocaleString()} coins to ${data.username}`,
+      });
+
+      // Reset form
+      form.reset();
+      setSelectedPackageId(null);
+      setUserStatus('idle');
+      setRecipient(null);
+      setIsSending(false);
+    }, 5000);
   }
 
   const isSendDisabled = isSending || userStatus !== 'valid' || totalCoins <= 0;
