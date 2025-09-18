@@ -116,7 +116,12 @@ export function SendCoinsForm() {
 
   return (
     <>
-      <Card className="w-full shadow-lg">
+      <Card className="w-full shadow-lg relative">
+        {isSending && (
+          <div className="absolute inset-0 bg-background/80 flex items-center justify-center z-10 rounded-lg">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          </div>
+        )}
         <div className="flex justify-between items-center p-6 pb-0">
           <CoinSenderLogo className="text-foreground h-7 w-7" />
           <div className="text-primary font-semibold">
@@ -217,7 +222,6 @@ export function SendCoinsForm() {
             </CardContent>
             <CardFooter>
               <Button type="submit" size="lg" disabled={isSendDisabled} className="w-full text-lg font-bold py-6 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white">
-                {isSending ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
                 Send Coins
               </Button>
             </CardFooter>
