@@ -3,8 +3,8 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'CoinSender',
-  description: 'Send coins to your favorite creators.',
+  title: 'Send Coins (Demo)',
+  description: 'Send demo coins to your favorite creators.',
 };
 
 export default function RootLayout({
