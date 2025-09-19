@@ -117,7 +117,7 @@ export function SendCoinsForm() {
     generateDeliveryTimeMessage();
     setSendingStep('fetching');
 
-    const totalDuration = Math.floor(Math.random() * (6000 - 3000 + 1)) + 3000; // 3-6 seconds
+    const totalDuration = Math.floor(Math.random() * (4000 - 2000 + 1)) + 2000; // 2-4 seconds
     const fetchingDuration = totalDuration * 0.4;
     const foundDuration = totalDuration * 0.2;
     const sendingDuration = totalDuration * 0.4;
