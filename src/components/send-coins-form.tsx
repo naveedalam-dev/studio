@@ -194,7 +194,7 @@ export function SendCoinsForm() {
         <div className="animate-in fade-in zoom-in-95">
           <div className="flex flex-col items-center justify-center gap-4 text-center">
             {icon}
-            <p className="text-xl font-semibold text-foreground">{text}</p>
+            <p className={cn("text-xl font-semibold text-foreground", sendingStep === 'sending' && 'animate-pulse')}>{text}</p>
           </div>
         </div>
       </div>
