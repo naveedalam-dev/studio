@@ -15,7 +15,6 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { CUSTOM_COIN_PRICE, PACKAGES, type Package } from '@/lib/data';
 import { Loader2, CheckCircle2, UserCheck, Send, PartyPopper } from 'lucide-react';
-import { CoinSenderLogo } from './icons';
 
 const SendCoinsSchema = z.object({
   username: z.string().min(2, 'Username is too short.').startsWith('@', "Username must start with '@'."),
@@ -117,6 +116,11 @@ export function SendCoinsForm() {
     generateDeliveryTimeMessage();
     setSendingStep('fetching');
 
+    const totalDuration = Math.floor(Math.random() * (15000 - 8000 + 1)) + 8000; // 8-15 seconds
+    const fetchingDuration = totalDuration * 0.4;
+    const foundDuration = totalDuration * 0.2;
+    const sendingDuration = totalDuration * 0.4;
+
     setTimeout(() => {
       setSendingStep('found');
       setTimeout(() => {
@@ -138,9 +142,9 @@ export function SendCoinsForm() {
             setRecipient(null);
             setSendingStep('idle');
           }, 2000); // Keep success message for 2 seconds
-        }, 1500); // "Sending" duration
-      }, 1000); // "Found" duration
-    }, 1500); // "Fetching" duration
+        }, sendingDuration);
+      }, foundDuration);
+    }, fetchingDuration);
   }
 
   const isSendDisabled = sendingStep !== 'idle' || userStatus !== 'valid' || !selectedPackageId || totalCoins <= 0;
@@ -149,6 +153,8 @@ export function SendCoinsForm() {
     if (sendingStep === 'idle') return null;
 
     let icon, text;
+    const username = form.getValues('username');
+
     switch (sendingStep) {
       case 'fetching':
         icon = <Loader2 className="h-12 w-12 animate-spin text-primary" />;
@@ -156,7 +162,7 @@ export function SendCoinsForm() {
         break;
       case 'found':
         icon = <UserCheck className="h-12 w-12 text-green-500" />;
-        text = 'User account found.';
+        text = `User account ${username} found.`;
         break;
       case 'sending':
         icon = <Send className="h-12 w-12 animate-pulse text-primary" />;
