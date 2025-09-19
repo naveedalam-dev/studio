@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { MoreVertical, Search } from 'lucide-react';
 import { ThemeToggleButton } from '@/components/theme-toggle';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export function AppHeader() {
   return (
@@ -19,9 +20,10 @@ export function AppHeader() {
         </div>
       </div>
       <div className="flex items-center gap-4">
-        <Button className="rounded-md bg-[#FE2C55] px-8 font-bold text-white hover:bg-[#E4284D]">
-          Log in
-        </Button>
+        <Avatar>
+            <AvatarImage src="https://i.postimg.cc/FR9kcCkn/446fd5d86ec906a98d556d890fb00c74.jpg" alt="User Avatar" />
+            <AvatarFallback>U</AvatarFallback>
+        </Avatar>
         <ThemeToggleButton />
         <MoreVertical className="h-6 w-6 cursor-pointer text-foreground" />
       </div>
