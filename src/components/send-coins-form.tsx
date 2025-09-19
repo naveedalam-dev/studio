@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -123,7 +124,7 @@ export function SendCoinsForm() {
           </div>
         )}
         <div className="flex justify-between items-center p-6 pb-0">
-          <CoinSenderLogo className="text-foreground h-7 w-7" />
+          <Image src="https://i.postimg.cc/brkZMhPN/tiktok-coin.png" alt="Coins Logo" width={28} height={28} />
           <div className="text-primary font-semibold">
             Balance: {balance.toLocaleString()} Coins
           </div>
@@ -177,7 +178,7 @@ export function SendCoinsForm() {
                         )}
                       >
                         {isSelected && <CheckCircle2 className="absolute top-2 right-2 h-5 w-5 text-primary" />}
-                        <CoinSenderLogo className="mx-auto h-8 w-8 mb-2" />
+                        <Image src="https://i.postimg.cc/brkZMhPN/tiktok-coin.png" alt="Coins Logo" width={32} height={32} className="mx-auto mb-2" />
                         <p className="font-bold text-lg">{pkg.isCustom ? 'Custom' : pkg.coins?.toLocaleString()}</p>
                         {pkg.isCustom ? (
                           <FormField
