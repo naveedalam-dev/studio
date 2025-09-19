@@ -2,6 +2,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { MoreVertical, Search } from 'lucide-react';
+import { ThemeToggleButton } from '@/components/theme-toggle';
 
 export function AppHeader() {
   return (
@@ -21,6 +22,7 @@ export function AppHeader() {
         <Button className="rounded-md bg-[#FE2C55] px-8 font-bold text-white hover:bg-[#E4284D]">
           Log in
         </Button>
+        <ThemeToggleButton />
         <MoreVertical className="h-6 w-6 cursor-pointer text-foreground" />
       </div>
     </header>
