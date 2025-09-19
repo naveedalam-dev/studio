@@ -129,11 +129,7 @@ export function SendCoinsForm() {
           setSendingStep('success');
 
           setBalance(prev => prev - totalCoins);
-          toast({
-            title: '✅ Success!',
-            description: `You sent ${totalCoins.toLocaleString()} coins to ${data.username}`,
-          });
-
+          
           setTimeout(() => {
             // Reset form
             form.reset();
