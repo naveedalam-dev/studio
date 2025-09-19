@@ -228,7 +228,7 @@ export function SendCoinsForm() {
                   name="username"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Username (recipient)</FormLabel>
+                      <FormLabel>Username</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input placeholder="@username" {...field} className="pr-10" />
