@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { CUSTOM_COIN_PRICE, PACKAGES, type Package } from '@/lib/data';
-import { Loader2, CheckCircle2 } from 'lucide-react';
+import { Loader2, CheckCircle2, UserCheck, Send, PartyPopper } from 'lucide-react';
 import { CoinSenderLogo } from './icons';
 
 const SendCoinsSchema = z.object({
@@ -23,9 +23,11 @@ const SendCoinsSchema = z.object({
 });
 
 type UserStatus = 'idle' | 'valid' | 'invalid';
+type SendingStep = 'idle' | 'fetching' | 'found' | 'sending' | 'success';
 
 export function SendCoinsForm() {
-  const [isSending, setIsSending] = useState(false);
+  const [sendingStep, setSendingStep] = useState<SendingStep>('idle');
+  const [deliveryTimeMessage, setDeliveryTimeMessage] = useState('');
   const [userStatus, setUserStatus] = useState<UserStatus>('idle');
   const [recipient, setRecipient] = useState<{ username: string; avatarUrl?: string } | null>(null);
   const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
@@ -83,151 +85,219 @@ export function SendCoinsForm() {
     return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(amount);
   }, []);
 
+  const generateDeliveryTimeMessage = () => {
+    const randomHours = Math.floor(Math.random() * 3) + 1; // 1, 2, or 3 hours
+    const randomMinutes = Math.floor(Math.random() * 60);
+    let message = `Note: The coins will be sent to the user within ${randomHours} hour`;
+    if (randomHours > 1) {
+      message += 's';
+    }
+    if (randomMinutes > 0) {
+      message += ` and ${randomMinutes} minute`;
+      if (randomMinutes > 1) {
+        message += 's';
+      }
+    }
+    message += '.';
+    setDeliveryTimeMessage(message);
+  };
+  
   function onSubmit(data: z.infer<typeof SendCoinsSchema>) {
     if (isSendDisabled) return;
 
-    setIsSending(true);
-    setTimeout(() => {
-      if (totalCoins > balance) {
-        toast({
-          title: 'Error',
-          description: 'Insufficient credits.',
-          variant: 'destructive',
-        });
-        setIsSending(false);
-        return;
-      }
-
-      setBalance(prev => prev - totalCoins);
+    if (totalCoins > balance) {
       toast({
-        title: '✅ Success!',
-        description: `You sent ${totalCoins.toLocaleString()} coins to ${data.username}`,
+        title: 'Error',
+        description: 'Insufficient credits.',
+        variant: 'destructive',
       });
+      return;
+    }
+    
+    generateDeliveryTimeMessage();
+    setSendingStep('fetching');
 
-      // Reset form
-      form.reset();
-      setSelectedPackageId(null);
-      setUserStatus('idle');
-      setRecipient(null);
-      setIsSending(false);
-    }, 5000);
+    setTimeout(() => {
+      setSendingStep('found');
+      setTimeout(() => {
+        setSendingStep('sending');
+        setTimeout(() => {
+          setSendingStep('success');
+
+          setBalance(prev => prev - totalCoins);
+          toast({
+            title: '✅ Success!',
+            description: `You sent ${totalCoins.toLocaleString()} coins to ${data.username}`,
+          });
+
+          setTimeout(() => {
+            // Reset form
+            form.reset();
+            setSelectedPackageId(null);
+            setUserStatus('idle');
+            setRecipient(null);
+            setSendingStep('idle');
+          }, 2000); // Keep success message for 2 seconds
+        }, 1500); // "Sending" duration
+      }, 1000); // "Found" duration
+    }, 1500); // "Fetching" duration
   }
 
-  const isSendDisabled = isSending || userStatus !== 'valid' || !selectedPackageId || totalCoins <= 0;
+  const isSendDisabled = sendingStep !== 'idle' || userStatus !== 'valid' || !selectedPackageId || totalCoins <= 0;
+
+  const renderSendingOverlay = () => {
+    if (sendingStep === 'idle') return null;
+
+    let icon, text;
+    switch (sendingStep) {
+      case 'fetching':
+        icon = <Loader2 className="h-12 w-12 animate-spin text-primary" />;
+        text = 'Fetching user account...';
+        break;
+      case 'found':
+        icon = <UserCheck className="h-12 w-12 text-green-500" />;
+        text = 'User account found.';
+        break;
+      case 'sending':
+        icon = <Send className="h-12 w-12 animate-pulse text-primary" />;
+        text = 'Sending coins...';
+        break;
+      case 'success':
+        icon = <PartyPopper className="h-12 w-12 text-green-500" />;
+        text = 'Coins sent successfully!';
+        break;
+      default:
+        return null;
+    }
+
+    return (
+      <div className="absolute inset-0 bg-background/90 backdrop-blur-sm flex flex-col items-center justify-center z-10 rounded-lg p-4">
+        <div className="animate-in fade-in zoom-in-95">
+          <div className="flex flex-col items-center justify-center gap-4 text-center">
+            {icon}
+            <p className="text-xl font-semibold text-foreground">{text}</p>
+            {sendingStep === 'success' && (
+              <p className="text-sm text-muted-foreground mt-2 animate-in fade-in-50 delay-500">
+                {deliveryTimeMessage}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <>
-      <Card className="w-full shadow-lg relative">
-        {isSending && (
-          <div className="absolute inset-0 bg-background/80 flex items-center justify-center z-10 rounded-lg">
-            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      <Card className="w-full shadow-lg relative overflow-hidden">
+        {renderSendingOverlay()}
+        <div className={cn("transition-opacity duration-300", sendingStep !== 'idle' && "opacity-50 blur-sm")}>
+          <div className="flex justify-between items-center p-6 pb-0">
+            <Image src="https://i.postimg.cc/brkZMhPN/tiktok-coin.png" alt="Coins Logo" width={28} height={28} />
+            <div className="text-primary font-semibold">
+              Balance: {balance.toLocaleString()} Coins
+            </div>
           </div>
-        )}
-        <div className="flex justify-between items-center p-6 pb-0">
-          <Image src="https://i.postimg.cc/brkZMhPN/tiktok-coin.png" alt="Coins Logo" width={28} height={28} />
-          <div className="text-primary font-semibold">
-            Balance: {balance.toLocaleString()} Coins
-          </div>
-        </div>
-        <CardHeader>
-          <CardTitle className="font-headline text-3xl">Get TikTok Coins</CardTitle>
-          <CardDescription>Send coins to your favorite creator</CardDescription>
-        </CardHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <CardContent className="space-y-8">
-              <FormField
-                control={form.control}
-                name="username"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Username (recipient)</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input placeholder="@username" {...field} className="pr-10" />
-                        <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                          {userStatus === 'valid' && recipient?.avatarUrl && (
-                            <Avatar className="h-6 w-6">
-                              <AvatarImage src={recipient.avatarUrl} alt={recipient.username} />
-                              <AvatarFallback>{recipient.username.slice(1, 3).toUpperCase()}</AvatarFallback>
-                            </Avatar>
+          <CardHeader>
+            <CardTitle className="font-headline text-3xl">Get TikTok Coins</CardTitle>
+            <CardDescription>Send coins to your favorite creator</CardDescription>
+          </CardHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)}>
+              <CardContent className="space-y-8">
+                <FormField
+                  control={form.control}
+                  name="username"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Username (recipient)</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input placeholder="@username" {...field} className="pr-10" />
+                          <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                            {userStatus === 'valid' && recipient?.avatarUrl && (
+                              <Avatar className="h-6 w-6">
+                                <AvatarImage src={recipient.avatarUrl} alt={recipient.username} />
+                                <AvatarFallback>{recipient.username.slice(1, 3).toUpperCase()}</AvatarFallback>
+                              </Avatar>
+                            )}
+                          </div>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="space-y-4">
+                  <Label>Choose a package</Label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {PACKAGES.map(pkg => {
+                      const isSelected = selectedPackageId === pkg.id;
+                      return (
+                        <div
+                          key={pkg.id}
+                          onClick={() => setSelectedPackageId(pkg.id)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setSelectedPackageId(pkg.id)}
+                          className={cn(
+                            'relative group rounded-lg border-2 bg-card p-4 text-center transition-all duration-200 hover:shadow-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring',
+                            isSelected ? 'border-primary shadow-lg scale-105' : 'border-border',
+                          )}
+                        >
+                          {isSelected && <CheckCircle2 className="absolute top-2 right-2 h-5 w-5 text-primary" />}
+                          <Image src="https://i.postimg.cc/brkZMhPN/tiktok-coin.png" alt="Coins Logo" width={32} height={32} className="mx-auto mb-2" />
+                          <p className="font-bold text-lg">{pkg.isCustom ? 'Custom' : pkg.coins?.toLocaleString()}</p>
+                          {pkg.isCustom ? (
+                            <FormField
+                              control={form.control}
+                              name="customAmount"
+                              render={({ field }) => (
+                                <FormItem className="mt-2">
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      placeholder="Amount"
+                                      {...field}
+                                      onFocus={() => setSelectedPackageId(pkg.id)}
+                                      className="text-center"
+                                    />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                          ) : (
+                            <p className="text-muted-foreground text-sm">{formatCurrency(pkg.price || 0)}</p>
                           )}
                         </div>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {totalPrice > 0 && (
+                  <div className="space-y-2 rounded-lg border bg-secondary/50 p-4">
+                    <h3 className="text-lg font-semibold">Total</h3>
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">Total Coins</span>
+                      <span className="font-bold">{totalCoins.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between items-center font-bold text-xl">
+                      <span>Price</span>
+                      <span>{formatCurrency(totalPrice)}</span>
+                    </div>
+                  </div>
                 )}
-              />
-
-              <div className="space-y-4">
-                <Label>Choose a package</Label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {PACKAGES.map(pkg => {
-                    const isSelected = selectedPackageId === pkg.id;
-                    return (
-                      <div
-                        key={pkg.id}
-                        onClick={() => setSelectedPackageId(pkg.id)}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setSelectedPackageId(pkg.id)}
-                        className={cn(
-                          'relative group rounded-lg border-2 bg-card p-4 text-center transition-all duration-200 hover:shadow-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring',
-                          isSelected ? 'border-primary shadow-lg scale-105' : 'border-border',
-                        )}
-                      >
-                        {isSelected && <CheckCircle2 className="absolute top-2 right-2 h-5 w-5 text-primary" />}
-                        <Image src="https://i.postimg.cc/brkZMhPN/tiktok-coin.png" alt="Coins Logo" width={32} height={32} className="mx-auto mb-2" />
-                        <p className="font-bold text-lg">{pkg.isCustom ? 'Custom' : pkg.coins?.toLocaleString()}</p>
-                        {pkg.isCustom ? (
-                          <FormField
-                            control={form.control}
-                            name="customAmount"
-                            render={({ field }) => (
-                              <FormItem className="mt-2">
-                                <FormControl>
-                                  <Input
-                                    type="number"
-                                    placeholder="Amount"
-                                    {...field}
-                                    onFocus={() => setSelectedPackageId(pkg.id)}
-                                    className="text-center"
-                                  />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                        ) : (
-                          <p className="text-muted-foreground text-sm">{formatCurrency(pkg.price || 0)}</p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {totalPrice > 0 && (
-                <div className="space-y-2 rounded-lg border bg-secondary/50 p-4">
-                  <h3 className="text-lg font-semibold">Total</h3>
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Total Coins</span>
-                    <span className="font-bold">{totalCoins.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between items-center font-bold text-xl">
-                    <span>Price</span>
-                    <span>{formatCurrency(totalPrice)}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-            <CardFooter>
-              <Button type="submit" size="lg" disabled={isSendDisabled} className="w-full text-lg font-bold py-6 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white">
-                Send Coins
-              </Button>
-            </CardFooter>
-          </form>
-        </Form>
+              </CardContent>
+              <CardFooter>
+                <Button type="submit" size="lg" disabled={isSendDisabled} className="w-full text-lg font-bold py-6 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white">
+                  Send Coins
+                </Button>
+              </CardFooter>
+            </form>
+          </Form>
+        </div>
       </Card>
     </>
   );
