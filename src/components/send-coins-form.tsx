@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { CUSTOM_COIN_PRICE, PACKAGES, type Package } from '@/lib/data';
-import { Loader2, CheckCircle2, UserCheck, Send } from 'lucide-react';
+import { Loader2, CheckCircle2, UserCheck, Send, Check } from 'lucide-react';
 
 const SendCoinsSchema = z.object({
   username: z.string().min(2, 'Username is too short.').startsWith('@', "Username must start with '@'."),
@@ -157,7 +157,11 @@ export function SendCoinsForm() {
         text = 'Fetching user account...';
         break;
       case 'found':
-        icon = <UserCheck className="h-12 w-12 text-green-500" />;
+        icon = (
+          <div className="relative h-12 w-12">
+            <CheckCircle2 className="h-12 w-12 text-green-500" />
+          </div>
+        );
         text = `User account ${username} found.`;
         break;
       case 'sending':
