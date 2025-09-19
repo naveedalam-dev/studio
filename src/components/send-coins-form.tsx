@@ -130,7 +130,7 @@ export function SendCoinsForm() {
           </div>
         </div>
         <CardHeader>
-          <CardTitle className="font-headline text-3xl">Get Coins</CardTitle>
+          <CardTitle className="font-headline text-3xl">Get TikTok Coins</CardTitle>
           <CardDescription>Send coins to your favorite creator</CardDescription>
         </CardHeader>
         <Form {...form}>
