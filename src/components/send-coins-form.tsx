@@ -153,19 +153,19 @@ export function SendCoinsForm() {
 
     switch (sendingStep) {
       case 'fetching':
-        icon = <Loader2 className="h-12 w-12 animate-spin text-primary" />;
+        icon = <Loader2 className="h-12 w-12 animate-spin text-foreground" />;
         text = 'Fetching user account...';
         break;
       case 'found':
         icon = (
           <div className="relative h-12 w-12">
-            <CheckCircle2 className="h-12 w-12 text-green-500" />
+            <CheckCircle2 className="h-12 w-12 text-foreground" />
           </div>
         );
         text = `User account ${username} found.`;
         break;
       case 'sending':
-        icon = <Send className="h-12 w-12 animate-pulse text-primary" />;
+        icon = <Send className="h-12 w-12 animate-pulse text-foreground" />;
         text = 'Sending coins...';
         break;
       case 'success':
