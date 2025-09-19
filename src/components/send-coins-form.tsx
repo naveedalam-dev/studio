@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { CUSTOM_COIN_PRICE, PACKAGES, type Package } from '@/lib/data';
-import { Loader2, CheckCircle2, UserCheck, Send, PartyPopper } from 'lucide-react';
+import { Loader2, CheckCircle2, UserCheck, Send } from 'lucide-react';
 
 const SendCoinsSchema = z.object({
   username: z.string().min(2, 'Username is too short.').startsWith('@', "Username must start with '@'."),
@@ -141,7 +141,7 @@ export function SendCoinsForm() {
             setUserStatus('idle');
             setRecipient(null);
             setSendingStep('idle');
-          }, 2000); // Keep success message for 2 seconds
+          }, 4000); // Keep success message for 4 seconds
         }, sendingDuration);
       }, foundDuration);
     }, fetchingDuration);
@@ -169,9 +169,26 @@ export function SendCoinsForm() {
         text = 'Sending coins...';
         break;
       case 'success':
-        icon = <PartyPopper className="h-12 w-12 text-green-500" />;
-        text = 'Coins sent successfully!';
-        break;
+        return (
+          <div className="absolute inset-0 bg-background/90 backdrop-blur-sm flex flex-col items-center justify-center z-10 rounded-lg p-4">
+            <div className="animate-in fade-in zoom-in-95 w-full max-w-sm mx-auto">
+              <Card className="shadow-2xl border-green-500/50">
+                <CardContent className="p-6 text-center">
+                  <div className="flex justify-center mb-4">
+                     <Image src="https://i.postimg.cc/brkZMhPN/tiktok-coin.png" alt="Success" width={64} height={64} />
+                  </div>
+                  <h3 className="text-2xl font-bold text-foreground">Coins Sent!</h3>
+                  <p className="text-muted-foreground mt-2">
+                    You have successfully sent {totalCoins.toLocaleString()} coins to {username}.
+                  </p>
+                  <p className="text-xs text-muted-foreground/80 mt-6 animate-in fade-in-50 delay-500">
+                    {deliveryTimeMessage}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        );
       default:
         return null;
     }
@@ -182,11 +199,6 @@ export function SendCoinsForm() {
           <div className="flex flex-col items-center justify-center gap-4 text-center">
             {icon}
             <p className="text-xl font-semibold text-foreground">{text}</p>
-            {sendingStep === 'success' && (
-              <p className="text-sm text-muted-foreground mt-2 animate-in fade-in-50 delay-500">
-                {deliveryTimeMessage}
-              </p>
-            )}
           </div>
         </div>
       </div>
