@@ -18,7 +18,7 @@ import { CUSTOM_COIN_PRICE, PACKAGES, type Package } from '@/lib/data';
 import { Loader2, CheckCircle2, UserCheck, Send, Check } from 'lucide-react';
 
 const SendCoinsSchema = z.object({
-  username: z.string().min(2, 'Username is too short.').startsWith('@', "Username must start with '@'."),
+  username: z.string().min(2, 'Username is too short.'),
   customAmount: z.string().optional(),
 });
 
@@ -36,7 +36,7 @@ export function SendCoinsForm() {
 
   const form = useForm<z.infer<typeof SendCoinsSchema>>({
     resolver: zodResolver(SendCoinsSchema),
-    defaultValues: { username: '', customAmount: '' },
+    defaultValues: { username: '@', customAmount: '' },
     mode: 'onChange',
   });
 
@@ -45,10 +45,10 @@ export function SendCoinsForm() {
 
   useEffect(() => {
     const username = form.getValues('username');
-    if (form.getFieldState('username').isDirty && !username.startsWith('@')) {
+    if (username.length <= 1) {
       setUserStatus('invalid');
       setRecipient(null);
-    } else if (username.length > 1 && username.startsWith('@')) {
+    } else if (username.length > 1) {
       setUserStatus('valid');
       const nameForAvatar = username.substring(1);
       setRecipient({
@@ -232,7 +232,18 @@ export function SendCoinsForm() {
                       <FormLabel>Username</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Input placeholder="@username" {...field} className="pr-10" />
+                          <Input 
+                            placeholder="@username" 
+                            {...field} 
+                            className="pr-10"
+                            onChange={(e) => {
+                              let value = e.target.value;
+                              if (!value.startsWith('@')) {
+                                value = '@' + value.replace(/^@*/, '');
+                              }
+                              field.onChange(value);
+                            }}
+                          />
                           <div className="absolute inset-y-0 right-0 flex items-center pr-3">
                             {userStatus === 'valid' && recipient?.avatarUrl && (
                               <Avatar className="h-6 w-6">
