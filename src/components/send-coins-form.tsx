@@ -37,7 +37,7 @@ export function SendCoinsForm() {
 
   const form = useForm<z.infer<typeof SendCoinsSchema>>({
     resolver: zodResolver(SendCoinsSchema),
-    defaultValues: { username: '', customAmount: '' },
+    defaultValues: { username: '@', customAmount: '' },
     mode: 'onChange',
   });
 
@@ -134,7 +134,7 @@ export function SendCoinsForm() {
           
           setTimeout(() => {
             // Reset form
-            form.reset();
+            form.reset({ username: '@', customAmount: '' });
             setSelectedPackageId(null);
             setUserStatus('idle');
             setRecipient(null);
@@ -211,7 +211,7 @@ export function SendCoinsForm() {
     <>
       <Card className="w-full shadow-lg relative overflow-hidden">
         {renderSendingOverlay()}
-        <div className={cn("transition-opacity duration-300", sendingStep !== 'idle' && "opacity-50")}>
+        <div className={cn("transition-opacity duration-300", sendingStep !== 'idle' && "opacity-0 pointer-events-none")}>
           <div className="flex justify-between items-center p-6 pb-0">
             <Image src="https://i.postimg.cc/brkZMhPN/tiktok-coin.png" alt="Coins Logo" width={28} height={28} />
             <div className="text-primary font-semibold">
