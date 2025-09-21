@@ -102,13 +102,13 @@
 }
 
 @keyframes tiktok-loader-1 {
-  0% { transform: translateX(-1rem) scale(0.6); z-index: 10; }
-  50% { transform: translateX(1rem) scale(1); z-index: 0; }
-  100% { transform: translateX(-1rem) scale(0.6); z-index: 10; }
+  0% { transform: translateX(-1.5rem) scale(0.6); z-index: 10; }
+  50% { transform: translateX(1.5rem) scale(1); z-index: 0; }
+  100% { transform: translateX(-1.5rem) scale(0.6); z-index: 10; }
 }
 
 @keyframes tiktok-loader-2 {
-  0% { transform: translateX(1rem) scale(1); z-index: 0; }
-  50% { transform: translateX(-1rem) scale(0.6); z-index: 10; }
-  100% { transform: translateX(1rem) scale(1); z-index: 0; }
+  0% { transform: translateX(1.5rem) scale(1); z-index: 0; }
+  50% { transform: translateX(-1.5rem) scale(0.6); z-index: 10; }
+  100% { transform: translateX(1.5rem) scale(1); z-index: 0; }
 }
