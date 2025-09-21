@@ -25,7 +25,20 @@ const SimulateUserLookupOutputSchema = z.object({
 export type SimulateUserLookupOutput = z.infer<typeof SimulateUserLookupOutputSchema>;
 
 export async function simulateUserLookup(input: SimulateUserLookupInput): Promise<SimulateUserLookupOutput> {
-  return simulateUserLookupFlow(input);
+  // For this demo, we'll just simulate a successful response.
+  // In a real app, this would call the Genkit flow.
+  return new Promise(resolve => {
+    setTimeout(() => {
+      if (input.username.length > 2 && input.username !== '@') {
+        resolve({
+          found: true,
+          avatarUrl: `https://ui-avatars.com/api/?name=${input.username.substring(1)}&background=random`,
+        });
+      } else {
+        resolve({ found: false });
+      }
+    }, 500 + Math.random() * 1000); // Simulate network delay
+  });
 }
 
 const simulateUserLookupPrompt = ai.definePrompt({
@@ -47,6 +60,8 @@ const simulateUserLookupFlow = ai.defineFlow(
     outputSchema: SimulateUserLookupOutputSchema,
   },
   async input => {
+     // This flow is not called directly in the demo to avoid API key errors.
+     // The exported `simulateUserLookup` function above provides a mocked response.
     const {output} = await simulateUserLookupPrompt(input);
     return output!;
   }
