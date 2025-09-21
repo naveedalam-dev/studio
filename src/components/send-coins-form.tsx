@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { CUSTOM_COIN_PRICE, PACKAGES, type Package } from '@/lib/data';
 import { Loader2, CheckCircle2, UserCheck, Send, Check } from 'lucide-react';
+import { TikTokLoader } from '@/components/tiktok-loader';
 
 const SendCoinsSchema = z.object({
   username: z.string().min(2, 'Username is too short.').startsWith('@', "Username must start with '@'."),
@@ -154,13 +155,13 @@ export function SendCoinsForm() {
 
     switch (sendingStep) {
       case 'fetching':
-        icon = <Loader2 className="h-12 w-12 animate-spin text-foreground" />;
+        icon = <TikTokLoader />;
         text = 'Fetching user account...';
         break;
       case 'found':
         icon = (
           <div className="relative h-12 w-12">
-            <CheckCircle2 className="h-12 w-12 text-foreground" />
+            <UserCheck className="h-12 w-12 text-foreground" />
           </div>
         );
         text = `User account ${username} found.`;
