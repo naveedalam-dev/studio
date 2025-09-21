@@ -178,13 +178,13 @@ export function SendCoinsForm() {
       case 'found':
         icon = (
           <div className="relative h-12 w-12">
-            <CheckCircle2 className="h-12 w-12 text-green-500" />
+            <CheckCircle2 className="h-12 w-12 text-black" />
           </div>
         );
         text = `User account ${username} found.`;
         break;
       case 'sending':
-        icon = <Send className="h-12 w-12 animate-pulse text-foreground" />;
+        icon = <Send className="h-12 w-12 animate-pulse text-black" />;
         text = 'Sending coins...';
         break;
       case 'success':
@@ -267,7 +267,7 @@ export function SendCoinsForm() {
           </CardHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
-              <fieldset disabled={isLookingUp}>
+              <fieldset disabled={sendingStep !== 'idle'}>
                 <CardContent className="space-y-8">
                   <FormField
                     control={form.control}
@@ -288,6 +288,7 @@ export function SendCoinsForm() {
                                 }
                                 field.onChange(value);
                               }}
+                              disabled={isLookingUp}
                             />
                             <div className="absolute inset-y-0 right-0 flex items-center pr-3">
                               {renderUsernameStatus()}
@@ -373,3 +374,5 @@ export function SendCoinsForm() {
     </>
   );
 }
+
+    
