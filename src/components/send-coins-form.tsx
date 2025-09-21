@@ -4,7 +4,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useTransition } from 'react';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -15,15 +15,17 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { CUSTOM_COIN_PRICE, PACKAGES, type Package } from '@/lib/data';
-import { Loader2, CheckCircle2, UserCheck, Send, Check } from 'lucide-react';
+import { Loader2, CheckCircle2, UserCheck, Send, Check, UserX, CircleDashed } from 'lucide-react';
 import { TikTokLoader } from '@/components/tiktok-loader';
+import { simulateUserLookup } from '@/ai/flows/simulate-user-lookup';
+import { useDebounce } from 'use-debounce';
 
 const SendCoinsSchema = z.object({
-  username: z.string().min(2, 'Username is too short.').startsWith('@', "Username must start with '@'."),
+  username: z.string().min(2, 'Username is too short.'),
   customAmount: z.string().optional(),
 });
 
-type UserStatus = 'idle' | 'valid' | 'invalid';
+type UserStatus = 'idle' | 'loading' | 'valid' | 'invalid';
 type SendingStep = 'idle' | 'fetching' | 'found' | 'sending' | 'success';
 
 export function SendCoinsForm() {
@@ -34,6 +36,7 @@ export function SendCoinsForm() {
   const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
   const [balance, setBalance] = useState(73687526);
   const { toast } = useToast();
+  const [isLookingUp, startLookupTransition] = useTransition();
 
   const form = useForm<z.infer<typeof SendCoinsSchema>>({
     resolver: zodResolver(SendCoinsSchema),
@@ -42,25 +45,38 @@ export function SendCoinsForm() {
   });
 
   const watchedUsername = form.watch('username');
+  const [debouncedUsername] = useDebounce(watchedUsername, 500);
   const watchedCustomAmount = form.watch('customAmount');
 
   useEffect(() => {
-    const username = form.getValues('username');
-    if (form.getFieldState('username').isDirty && !username.startsWith('@')) {
-      setUserStatus('invalid');
-      setRecipient(null);
-    } else if (username.length > 1 && username.startsWith('@')) {
-      setUserStatus('valid');
-      const nameForAvatar = username.substring(1);
-      setRecipient({
-        username: username,
-        avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(nameForAvatar)}&background=random`,
-      });
-    } else {
+    const username = debouncedUsername;
+    if (username.length <= 1 || username === '@') {
       setUserStatus('idle');
       setRecipient(null);
+      return;
     }
-  }, [watchedUsername, form]);
+
+    setUserStatus('loading');
+    startLookupTransition(async () => {
+      try {
+        const result = await simulateUserLookup({ username });
+        if (result.found) {
+          setUserStatus('valid');
+          setRecipient({
+            username: username,
+            avatarUrl: result.avatarUrl,
+          });
+        } else {
+          setUserStatus('invalid');
+          setRecipient(null);
+        }
+      } catch (error) {
+        setUserStatus('invalid');
+        setRecipient(null);
+        console.error('User lookup failed:', error);
+      }
+    });
+  }, [debouncedUsername]);
 
   const { totalCoins, totalPrice } = useMemo(() => {
     if (!selectedPackageId) return { totalCoins: 0, totalPrice: 0 };
@@ -87,6 +103,7 @@ export function SendCoinsForm() {
   }, []);
 
   const generateDeliveryTimeMessage = () => {
+    // This will only run on the client, after initial hydration
     const randomHours = Math.floor(Math.random() * 3) + 1; // 1, 2, or 3 hours
     const randomMinutes = Math.floor(Math.random() * 60);
     let message = `Note: The coins will be sent to the user within ${randomHours} hour`;
@@ -118,7 +135,7 @@ export function SendCoinsForm() {
     generateDeliveryTimeMessage();
     setSendingStep('fetching');
 
-    const totalDuration = Math.floor(Math.random() * (4000 - 2000 + 1)) + 2000; // 2-4 seconds
+    const totalDuration = Math.floor(Math.random() * (4000 - 2000 + 1)) + 2000;
     const fetchingDuration = totalDuration * 0.4;
     const foundDuration = totalDuration * 0.2;
     const sendingDuration = totalDuration * 0.4;
@@ -139,13 +156,13 @@ export function SendCoinsForm() {
             setUserStatus('idle');
             setRecipient(null);
             setSendingStep('idle');
-          }, 4000); // Keep success message for 4 seconds
+          }, 3000); // Keep success message for 3 seconds
         }, sendingDuration);
       }, foundDuration);
     }, fetchingDuration);
   }
 
-  const isSendDisabled = sendingStep !== 'idle' || userStatus !== 'valid' || !selectedPackageId || totalCoins <= 0;
+  const isSendDisabled = sendingStep !== 'idle' || userStatus !== 'valid' || !selectedPackageId || totalCoins <= 0 || isLookingUp;
 
   const renderSendingOverlay = () => {
     if (sendingStep === 'idle') return null;
@@ -161,7 +178,7 @@ export function SendCoinsForm() {
       case 'found':
         icon = (
           <div className="relative h-12 w-12">
-            <UserCheck className="h-12 w-12 text-foreground" />
+            <CheckCircle2 className="h-12 w-12 text-green-500" />
           </div>
         );
         text = `User account ${username} found.`;
@@ -206,12 +223,38 @@ export function SendCoinsForm() {
       </div>
     );
   };
+  
+  const renderUsernameStatus = () => {
+    switch (userStatus) {
+      case 'loading':
+        return <CircleDashed className="h-6 w-6 animate-spin text-muted-foreground" />;
+      case 'valid':
+        if (recipient?.avatarUrl) {
+          return (
+            <Avatar className="h-6 w-6">
+              <AvatarImage src={recipient.avatarUrl} alt={recipient.username} />
+              <AvatarFallback>{recipient.username.slice(1, 3).toUpperCase()}</AvatarFallback>
+            </Avatar>
+          );
+        }
+        return <CheckCircle2 className="h-6 w-6 text-green-500" />;
+      case 'invalid':
+        if (form.getValues('username').length > 1) {
+          return <UserX className="h-6 w-6 text-destructive" />;
+        }
+        return null;
+      case 'idle':
+      default:
+        return null;
+    }
+  };
+
 
   return (
     <>
       <Card className="w-full shadow-lg relative overflow-hidden">
         {renderSendingOverlay()}
-        <div className={cn("transition-opacity duration-300", sendingStep !== 'idle' && "opacity-0 pointer-events-none")}>
+        <div className={cn("transition-opacity duration-300", sendingStep !== 'idle' && "opacity-20 pointer-events-none")}>
           <div className="flex justify-between items-center p-6 pb-0">
             <Image src="https://i.postimg.cc/brkZMhPN/tiktok-coin.png" alt="Coins Logo" width={28} height={28} />
             <div className="text-primary font-semibold">
@@ -224,97 +267,105 @@ export function SendCoinsForm() {
           </CardHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
-              <CardContent className="space-y-8">
-                <FormField
-                  control={form.control}
-                  name="username"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Username</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input placeholder="@username" {...field} className="pr-10" />
-                          <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                            {userStatus === 'valid' && recipient?.avatarUrl && (
-                              <Avatar className="h-6 w-6">
-                                <AvatarImage src={recipient.avatarUrl} alt={recipient.username} />
-                                <AvatarFallback>{recipient.username.slice(1, 3).toUpperCase()}</AvatarFallback>
-                              </Avatar>
+              <fieldset disabled={isLookingUp}>
+                <CardContent className="space-y-8">
+                  <FormField
+                    control={form.control}
+                    name="username"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Username</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input 
+                              placeholder="@username" 
+                              {...field} 
+                              className="pr-10"
+                              onChange={(e) => {
+                                let value = e.target.value;
+                                if (!value.startsWith('@')) {
+                                  value = '@' + value.replace(/^@*/, '');
+                                }
+                                field.onChange(value);
+                              }}
+                            />
+                            <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                              {renderUsernameStatus()}
+                            </div>
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="space-y-4">
+                    <Label>Choose a package</Label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                      {PACKAGES.map(pkg => {
+                        const isSelected = selectedPackageId === pkg.id;
+                        return (
+                          <div
+                            key={pkg.id}
+                            onClick={() => setSelectedPackageId(pkg.id)}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setSelectedPackageId(pkg.id)}
+                            className={cn(
+                              'relative group rounded-lg border-2 bg-card p-4 text-center transition-all duration-200 hover:shadow-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring',
+                              isSelected ? 'border-primary shadow-lg scale-105' : 'border-border',
+                            )}
+                          >
+                            {isSelected && <CheckCircle2 className="absolute top-2 right-2 h-5 w-5 text-primary" />}
+                            <Image src="https://i.postimg.cc/brkZMhPN/tiktok-coin.png" alt="Coins Logo" width={32} height={32} className="mx-auto mb-2" />
+                            <p className="font-bold text-lg">{pkg.isCustom ? 'Custom' : pkg.coins?.toLocaleString()}</p>
+                            {pkg.isCustom ? (
+                              <FormField
+                                control={form.control}
+                                name="customAmount"
+                                render={({ field }) => (
+                                  <FormItem className="mt-2">
+                                    <FormControl>
+                                      <Input
+                                        type="number"
+                                        placeholder="Amount"
+                                        {...field}
+                                        onFocus={() => setSelectedPackageId(pkg.id)}
+                                        className="text-center"
+                                      />
+                                    </FormControl>
+                                  </FormItem>
+                                )}
+                              />
+                            ) : (
+                              <p className="text-muted-foreground text-sm">{formatCurrency(pkg.price || 0)}</p>
                             )}
                           </div>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {totalPrice > 0 && (
+                    <div className="space-y-2 rounded-lg border bg-secondary/50 p-4">
+                      <h3 className="text-lg font-semibold">Total</h3>
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Total Coins</span>
+                        <span className="font-bold">{totalCoins.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between items-center font-bold text-xl">
+                        <span>Price</span>
+                        <span>{formatCurrency(totalPrice)}</span>
+                      </div>
+                    </div>
                   )}
-                />
-
-                <div className="space-y-4">
-                  <Label>Choose a package</Label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                    {PACKAGES.map(pkg => {
-                      const isSelected = selectedPackageId === pkg.id;
-                      return (
-                        <div
-                          key={pkg.id}
-                          onClick={() => setSelectedPackageId(pkg.id)}
-                          role="button"
-                          tabIndex={0}
-                          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setSelectedPackageId(pkg.id)}
-                          className={cn(
-                            'relative group rounded-lg border-2 bg-card p-4 text-center transition-all duration-200 hover:shadow-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring',
-                            isSelected ? 'border-primary shadow-lg scale-105' : 'border-border',
-                          )}
-                        >
-                          {isSelected && <CheckCircle2 className="absolute top-2 right-2 h-5 w-5 text-primary" />}
-                          <Image src="https://i.postimg.cc/brkZMhPN/tiktok-coin.png" alt="Coins Logo" width={32} height={32} className="mx-auto mb-2" />
-                          <p className="font-bold text-lg">{pkg.isCustom ? 'Custom' : pkg.coins?.toLocaleString()}</p>
-                          {pkg.isCustom ? (
-                            <FormField
-                              control={form.control}
-                              name="customAmount"
-                              render={({ field }) => (
-                                <FormItem className="mt-2">
-                                  <FormControl>
-                                    <Input
-                                      type="number"
-                                      placeholder="Amount"
-                                      {...field}
-                                      onFocus={() => setSelectedPackageId(pkg.id)}
-                                      className="text-center"
-                                    />
-                                  </FormControl>
-                                </FormItem>
-                              )}
-                            />
-                          ) : (
-                            <p className="text-muted-foreground text-sm">{formatCurrency(pkg.price || 0)}</p>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {totalPrice > 0 && (
-                  <div className="space-y-2 rounded-lg border bg-secondary/50 p-4">
-                    <h3 className="text-lg font-semibold">Total</h3>
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">Total Coins</span>
-                      <span className="font-bold">{totalCoins.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between items-center font-bold text-xl">
-                      <span>Price</span>
-                      <span>{formatCurrency(totalPrice)}</span>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-              <CardFooter>
-                <Button type="submit" size="lg" disabled={isSendDisabled} className="w-full text-lg font-bold py-6 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white">
-                  Send Coins
-                </Button>
-              </CardFooter>
+                </CardContent>
+                <CardFooter>
+                  <Button type="submit" size="lg" disabled={isSendDisabled} className="w-full text-lg font-bold py-6 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white">
+                    {isLookingUp ? <><CircleDashed className="mr-2 h-4 w-4 animate-spin" /> Looking up user...</> : 'Send Coins' }
+                  </Button>
+                </CardFooter>
+              </fieldset>
             </form>
           </Form>
         </div>

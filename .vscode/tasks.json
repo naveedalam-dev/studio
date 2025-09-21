@@ -1,0 +1,17 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "npm",
+			"script": "dev",
+			"path": "src",
+			"problemMatcher": [],
+			"label": "npm: dev - src",
+			"detail": "next dev --turbopack",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		}
+	]
+}
