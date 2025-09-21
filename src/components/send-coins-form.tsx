@@ -172,7 +172,7 @@ export function SendCoinsForm() {
         break;
       case 'success':
         return (
-          <div className="absolute inset-0 bg-background/90 backdrop-blur-sm flex flex-col items-center justify-center z-10 rounded-lg p-4">
+          <div className="absolute inset-0 bg-background/90 flex flex-col items-center justify-center z-10 rounded-lg p-4">
             <div className="animate-in fade-in zoom-in-95 w-full max-w-sm mx-auto">
               <Card className="shadow-2xl border-green-500/50">
                 <CardContent className="p-6 text-center">
@@ -196,7 +196,7 @@ export function SendCoinsForm() {
     }
 
     return (
-      <div className="absolute inset-0 bg-background/90 backdrop-blur-sm flex flex-col items-center justify-center z-10 rounded-lg p-4">
+      <div className="absolute inset-0 bg-background/90 flex flex-col items-center justify-center z-10 rounded-lg p-4">
         <div className="animate-in fade-in zoom-in-95">
           <div className="flex flex-col items-center justify-center gap-4 text-center">
             {icon}
@@ -211,7 +211,7 @@ export function SendCoinsForm() {
     <>
       <Card className="w-full shadow-lg relative overflow-hidden">
         {renderSendingOverlay()}
-        <div className={cn("transition-opacity duration-300", sendingStep !== 'idle' && "opacity-50 blur-sm")}>
+        <div className={cn("transition-opacity duration-300", sendingStep !== 'idle' && "opacity-50")}>
           <div className="flex justify-between items-center p-6 pb-0">
             <Image src="https://i.postimg.cc/brkZMhPN/tiktok-coin.png" alt="Coins Logo" width={28} height={28} />
             <div className="text-primary font-semibold">
