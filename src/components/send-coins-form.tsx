@@ -19,7 +19,7 @@ import { Loader2, CheckCircle2, UserCheck, Send, Check, UserX, CircleDashed } fr
 import { TikTokLoader } from '@/components/tiktok-loader';
 
 const SendCoinsSchema = z.object({
-  username: z.string().min(2, 'Username is too short.'),
+  username: z.string().min(1, 'Username is required.'),
   customAmount: z.string().optional(),
 });
 
@@ -48,7 +48,7 @@ export function SendCoinsForm() {
     if (!selectedPkg) return { totalCoins: 0, totalPrice: 0 };
 
     if (selectedPkg.isCustom) {
-      const amount = parseFloat(watchedCustomAmount) || 0;
+      const amount = parseFloat(watchedCustomAmount || '0') || 0;
       return {
         totalCoins: amount,
         totalPrice: amount * CUSTOM_COIN_PRICE,
@@ -138,14 +138,14 @@ export function SendCoinsForm() {
         break;
       case 'found':
         icon = (
-          <div className="relative h-12 w-12">
-            <CheckCircle2 className="h-12 w-12 text-black" />
+          <div className="relative h-20 w-20">
+            <CheckCircle2 className="h-20 w-20 text-black" />
           </div>
         );
         text = `User account ${username} found.`;
         break;
       case 'sending':
-        icon = <Send className="h-12 w-12 animate-pulse text-black" />;
+        icon = <Send className="h-20 w-20 animate-pulse text-black" />;
         text = 'Sending coins...';
         break;
       case 'success':
@@ -305,7 +305,3 @@ export function SendCoinsForm() {
     </>
   );
 }
-
-    
-
-    
