@@ -4,7 +4,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { useState, useEffect, useMemo, useCallback, useTransition } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -17,26 +17,20 @@ import { cn } from '@/lib/utils';
 import { CUSTOM_COIN_PRICE, PACKAGES, type Package } from '@/lib/data';
 import { Loader2, CheckCircle2, UserCheck, Send, Check, UserX, CircleDashed } from 'lucide-react';
 import { TikTokLoader } from '@/components/tiktok-loader';
-import { simulateUserLookup } from '@/ai/flows/simulate-user-lookup';
-import { useDebounce } from 'use-debounce';
 
 const SendCoinsSchema = z.object({
   username: z.string().min(2, 'Username is too short.'),
   customAmount: z.string().optional(),
 });
 
-type UserStatus = 'idle' | 'loading' | 'valid' | 'invalid';
 type SendingStep = 'idle' | 'fetching' | 'found' | 'sending' | 'success';
 
 export function SendCoinsForm() {
   const [sendingStep, setSendingStep] = useState<SendingStep>('idle');
   const [deliveryTimeMessage, setDeliveryTimeMessage] = useState('');
-  const [userStatus, setUserStatus] = useState<UserStatus>('idle');
-  const [recipient, setRecipient] = useState<{ username: string; avatarUrl?: string } | null>(null);
   const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
   const [balance, setBalance] = useState(73687526);
   const { toast } = useToast();
-  const [isLookingUp, startLookupTransition] = useTransition();
 
   const form = useForm<z.infer<typeof SendCoinsSchema>>({
     resolver: zodResolver(SendCoinsSchema),
@@ -45,38 +39,7 @@ export function SendCoinsForm() {
   });
 
   const watchedUsername = form.watch('username');
-  const [debouncedUsername] = useDebounce(watchedUsername, 500);
   const watchedCustomAmount = form.watch('customAmount');
-
-  useEffect(() => {
-    const username = debouncedUsername;
-    if (username.length <= 1 || username === '@') {
-      setUserStatus('idle');
-      setRecipient(null);
-      return;
-    }
-
-    setUserStatus('loading');
-    startLookupTransition(async () => {
-      try {
-        const result = await simulateUserLookup({ username });
-        if (result.found) {
-          setUserStatus('valid');
-          setRecipient({
-            username: username,
-            avatarUrl: result.avatarUrl,
-          });
-        } else {
-          setUserStatus('invalid');
-          setRecipient(null);
-        }
-      } catch (error) {
-        setUserStatus('invalid');
-        setRecipient(null);
-        console.error('User lookup failed:', error);
-      }
-    });
-  }, [debouncedUsername]);
 
   const { totalCoins, totalPrice } = useMemo(() => {
     if (!selectedPackageId) return { totalCoins: 0, totalPrice: 0 };
@@ -153,8 +116,6 @@ export function SendCoinsForm() {
             // Reset form
             form.reset({ username: '@', customAmount: '' });
             setSelectedPackageId(null);
-            setUserStatus('idle');
-            setRecipient(null);
             setSendingStep('idle');
           }, 3000); // Keep success message for 3 seconds
         }, sendingDuration);
@@ -162,7 +123,7 @@ export function SendCoinsForm() {
     }, fetchingDuration);
   }
 
-  const isSendDisabled = sendingStep !== 'idle' || userStatus !== 'valid' || !selectedPackageId || totalCoins <= 0 || isLookingUp;
+  const isSendDisabled = sendingStep !== 'idle' || !watchedUsername || watchedUsername.length <= 1 || !selectedPackageId || totalCoins <= 0;
 
   const renderSendingOverlay = () => {
     if (sendingStep === 'idle') return null;
@@ -224,32 +185,6 @@ export function SendCoinsForm() {
     );
   };
   
-  const renderUsernameStatus = () => {
-    switch (userStatus) {
-      case 'loading':
-        return <CircleDashed className="h-6 w-6 animate-spin text-muted-foreground" />;
-      case 'valid':
-        if (recipient?.avatarUrl) {
-          return (
-            <Avatar className="h-6 w-6">
-              <AvatarImage src={recipient.avatarUrl} alt={recipient.username} />
-              <AvatarFallback>{recipient.username.slice(1, 3).toUpperCase()}</AvatarFallback>
-            </Avatar>
-          );
-        }
-        return <CheckCircle2 className="h-6 w-6 text-green-500" />;
-      case 'invalid':
-        if (form.getValues('username').length > 1) {
-          return <UserX className="h-6 w-6 text-destructive" />;
-        }
-        return null;
-      case 'idle':
-      default:
-        return null;
-    }
-  };
-
-
   return (
     <>
       <Card className="w-full shadow-lg relative overflow-hidden">
@@ -288,11 +223,7 @@ export function SendCoinsForm() {
                                 }
                                 field.onChange(value);
                               }}
-                              disabled={isLookingUp}
                             />
-                            <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                              {renderUsernameStatus()}
-                            </div>
                           </div>
                         </FormControl>
                         <FormMessage />
@@ -363,7 +294,7 @@ export function SendCoinsForm() {
                 </CardContent>
                 <CardFooter>
                   <Button type="submit" size="lg" disabled={isSendDisabled} className="w-full text-lg font-bold py-6 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white">
-                    {isLookingUp ? <><CircleDashed className="mr-2 h-4 w-4 animate-spin" /> Looking up user...</> : 'Send Coins' }
+                    Send Coins
                   </Button>
                 </CardFooter>
               </fieldset>
@@ -374,5 +305,7 @@ export function SendCoinsForm() {
     </>
   );
 }
+
+    
 
     
